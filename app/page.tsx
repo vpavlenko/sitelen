@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
 
 const DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [_sona_olin_nasin_jan_awen] li lon e toki+pona
 jan [_sona] li jan+lawa pi+toki+pona
-jan mute pi++ma ale li kepeken e ona`;
+jan mute pi++ma ale li toki kepeken ona`;
 
 const SITELEN_FONT_SIZE_STORAGE_KEY = "sitelen-font-size";
 const THEME_STORAGE_KEY = "sitelen-theme";
