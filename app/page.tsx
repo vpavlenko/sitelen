@@ -522,8 +522,8 @@ export default function Home() {
                 <input
                   className={
                     theme === "dark"
-                      ? "w-[100px] cursor-pointer accent-[#2dd4bf]"
-                      : "w-[100px] cursor-pointer accent-[#0f766e]"
+                      ? "w-[200px] cursor-pointer accent-[#2dd4bf]"
+                      : "w-[200px] cursor-pointer accent-[#0f766e]"
                   }
                   max={SITELEN_FONT_SIZE_MAX}
                   min={SITELEN_FONT_SIZE_MIN}
