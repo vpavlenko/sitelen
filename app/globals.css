@@ -116,6 +116,45 @@ textarea {
   border-radius: 0.375rem 0 0.5rem 0;
 }
 
+.autocomplete-overlay {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  min-width: 8rem;
+  max-width: min(18rem, calc(100% - 2rem));
+  flex-direction: column;
+  pointer-events: none;
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 0.375rem;
+  border-color: #9ca3af;
+  padding: 0.375rem 0;
+  font-size: 20px;
+  line-height: 2rem;
+  transform: translateY(0.125rem);
+}
+
+.autocomplete-overlay__word {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  white-space: nowrap;
+}
+
+.autocomplete-overlay__glyph {
+  color: #0f766e;
+  font-size: 1.2em;
+  line-height: 1;
+  text-align: center;
+}
+
+.autocomplete-overlay strong {
+  color: #0f766e;
+  font-weight: 700;
+}
+
 .png-button:focus,
 .icon-button:focus {
   outline: none;

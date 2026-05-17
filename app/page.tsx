@@ -17,11 +17,14 @@ const SITELEN_LINE_HEIGHT = 1.16;
 const PNG_CAPTURE_ANIMATION_MS = 900;
 const PNG_CAPTURE_CLEAR_DELAY_MS = PNG_CAPTURE_ANIMATION_MS + 40;
 const PNG_EXPORT_SCALE_MULTIPLIER = 2;
+const SINGLE_GLYPH_FILTER_FONT_SIZE = 64;
+const SINGLE_GLYPH_WIDTH_TOLERANCE = 1.35;
 
 type CopyState = "idle" | "copied" | "downloaded" | "error";
 type Definitions = Record<string, string>;
 type Theme = "dark" | "light";
 type CursorWord = {
+  cursor: number;
   end: number;
   glyphEnd: number;
   glyphStart: number;
@@ -32,6 +35,10 @@ type CaptureAnimation = {
   height: number;
   style: CSSProperties;
   width: number;
+};
+type AutocompletePosition = {
+  left: number;
+  top: number;
 };
 
 function getSavedFontSize() {
@@ -149,12 +156,127 @@ function getWordAtCursor(value: string, cursor: number): CursorWord {
   }
 
   return {
+    cursor,
     end,
     glyphEnd,
     glyphStart,
     start,
     word: value.slice(start, end).toLowerCase(),
   };
+}
+
+function emptyCursorWord(): CursorWord {
+  return {
+    cursor: 0,
+    end: 0,
+    glyphEnd: 0,
+    glyphStart: 0,
+    start: 0,
+    word: "",
+  };
+}
+
+function getDictionaryMatches(definitions: Definitions, word: string) {
+  if (!word) {
+    return [];
+  }
+
+  return Object.keys(definitions)
+    .filter((definitionWord) => definitionWord.startsWith(word))
+    .sort((a, b) => a.localeCompare(b));
+}
+
+async function filterSingleGlyphDefinitions(definitions: Definitions) {
+  if (typeof document === "undefined") {
+    return definitions;
+  }
+
+  if ("fonts" in document) {
+    await document.fonts.load(
+      `${SINGLE_GLYPH_FILTER_FONT_SIZE}px "Linja Pona"`,
+    );
+    await document.fonts.ready;
+  }
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return definitions;
+  }
+
+  context.font = `${SINGLE_GLYPH_FILTER_FONT_SIZE}px "Linja Pona", sans-serif`;
+
+  const referenceGlyphWidth = Math.max(
+    context.measureText("a").width,
+    context.measureText("toki").width,
+    context.measureText("pona").width,
+  );
+  const maxSingleGlyphWidth =
+    referenceGlyphWidth * SINGLE_GLYPH_WIDTH_TOLERANCE;
+
+  return Object.fromEntries(
+    Object.entries(definitions).filter(([word]) => {
+      const width = context.measureText(word).width;
+
+      return width > 0 && width <= maxSingleGlyphWidth;
+    }),
+  );
+}
+
+function getTextareaTextPosition(
+  element: HTMLTextAreaElement,
+  textIndex: number,
+) {
+  const computed = window.getComputedStyle(element);
+  const mirror = document.createElement("div");
+  const marker = document.createElement("span");
+  const properties = [
+    "borderBottomWidth",
+    "borderLeftWidth",
+    "borderRightWidth",
+    "borderTopWidth",
+    "boxSizing",
+    "fontFamily",
+    "fontSize",
+    "fontWeight",
+    "letterSpacing",
+    "lineHeight",
+    "paddingBottom",
+    "paddingLeft",
+    "paddingRight",
+    "paddingTop",
+    "textTransform",
+    "width",
+  ] as const;
+
+  for (const property of properties) {
+    mirror.style[property] = computed[property];
+  }
+
+  mirror.style.left = `${element.getBoundingClientRect().left}px`;
+  mirror.style.minHeight = "0";
+  mirror.style.overflow = "hidden";
+  mirror.style.position = "fixed";
+  mirror.style.top = `${element.getBoundingClientRect().top}px`;
+  mirror.style.visibility = "hidden";
+  mirror.style.whiteSpace = "pre-wrap";
+  mirror.style.wordBreak = "break-word";
+  mirror.textContent = element.value.slice(0, textIndex);
+  marker.textContent = "\u200b";
+  mirror.append(marker);
+  document.body.append(mirror);
+
+  const textareaRect = element.getBoundingClientRect();
+  const markerRect = marker.getBoundingClientRect();
+  const position = {
+    left: markerRect.left - textareaRect.left - element.scrollLeft,
+    top: markerRect.top - textareaRect.top - element.scrollTop,
+  };
+
+  mirror.remove();
+
+  return position;
 }
 
 function renderSitelenText(text: string, cursorWord: CursorWord, theme: Theme) {
@@ -187,16 +309,13 @@ export default function Home() {
   const [captureAnimation, setCaptureAnimation] =
     useState<CaptureAnimation | null>(null);
   const [definitions, setDefinitions] = useState<Definitions>({});
-  const [cursorWord, setCursorWord] = useState<CursorWord>({
-    end: 0,
-    glyphEnd: 0,
-    glyphStart: 0,
-    start: 0,
-    word: "",
-  });
+  const [cursorWord, setCursorWord] = useState<CursorWord>(emptyCursorWord);
+  const [autocompletePosition, setAutocompletePosition] =
+    useState<AutocompletePosition | null>(null);
   const [isTextFocused, setIsTextFocused] = useState(false);
   const pngButtonRef = useRef<HTMLButtonElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const restoreSavedSettings = window.setTimeout(() => {
@@ -215,6 +334,7 @@ export default function Home() {
 
     fetch("/api/definitions")
       .then((response) => response.json() as Promise<Definitions>)
+      .then((nextDefinitions) => filterSingleGlyphDefinitions(nextDefinitions))
       .then((nextDefinitions) => {
         if (isActive) {
           setDefinitions(nextDefinitions);
@@ -245,8 +365,34 @@ export default function Home() {
     };
   }, [copyState]);
 
+  function updateAutocompletePosition(
+    element: HTMLTextAreaElement,
+    nextCursorWord: CursorWord,
+  ) {
+    if (nextCursorWord.cursor !== nextCursorWord.end || !nextCursorWord.word) {
+      setAutocompletePosition(null);
+      return;
+    }
+
+    const textPosition = getTextareaTextPosition(element, nextCursorWord.start);
+    const lineHeight = Number.parseFloat(
+      window.getComputedStyle(element).lineHeight,
+    );
+
+    setAutocompletePosition({
+      left: textPosition.left,
+      top: textPosition.top + (Number.isFinite(lineHeight) ? lineHeight : 32),
+    });
+  }
+
   function updateCursorWord(element: HTMLTextAreaElement) {
-    setCursorWord(getWordAtCursor(element.value, element.selectionStart));
+    const nextCursorWord = getWordAtCursor(
+      element.value,
+      element.selectionStart,
+    );
+
+    setCursorWord(nextCursorWord);
+    updateAutocompletePosition(element, nextCursorWord);
   }
 
   function updateFontSize(value: number) {
@@ -263,7 +409,48 @@ export default function Home() {
 
   function resetText() {
     updateText(DEFAULT_TEXT);
-    setCursorWord({ end: 0, glyphEnd: 0, glyphStart: 0, start: 0, word: "" });
+    setCursorWord(emptyCursorWord());
+    setAutocompletePosition(null);
+  }
+
+  function updateTextFromTextarea(element: HTMLTextAreaElement) {
+    const nextText = element.value;
+    const selectionStart = element.selectionStart;
+    const selectionEnd = element.selectionEnd;
+    const nextCursorWord = getWordAtCursor(nextText, selectionStart);
+    const dictionaryMatches = getDictionaryMatches(
+      definitions,
+      nextCursorWord.word,
+    );
+    const isTypingForward = nextText.length > text.length;
+    const shouldAutoInsert =
+      isTypingForward &&
+      selectionStart === selectionEnd &&
+      selectionStart === nextCursorWord.end &&
+      dictionaryMatches.length === 1 &&
+      dictionaryMatches[0] !== nextCursorWord.word;
+
+    if (!shouldAutoInsert) {
+      updateText(nextText);
+      setCursorWord(nextCursorWord);
+      updateAutocompletePosition(element, nextCursorWord);
+      return;
+    }
+
+    const completedWord = dictionaryMatches[0];
+    const completedText = `${nextText.slice(
+      0,
+      nextCursorWord.start,
+    )}${completedWord}${nextText.slice(nextCursorWord.end)}`;
+    const completedCursor = nextCursorWord.start + completedWord.length;
+
+    updateText(completedText);
+    setCursorWord(getWordAtCursor(completedText, completedCursor));
+    setAutocompletePosition(null);
+
+    window.requestAnimationFrame(() => {
+      textareaRef.current?.setSelectionRange(completedCursor, completedCursor);
+    });
   }
 
   function toggleTheme() {
@@ -425,6 +612,14 @@ export default function Home() {
   }
 
   const cursorDefinition = definitions[cursorWord.word];
+  const autocompleteMatches =
+    isTextFocused &&
+    autocompletePosition &&
+    cursorWord.cursor === cursorWord.end
+      ? getDictionaryMatches(definitions, cursorWord.word)
+      : [];
+  const autocompleteSuggestions =
+    autocompleteMatches.length > 1 ? autocompleteMatches.slice(0, 6) : [];
 
   return (
     <main
@@ -442,11 +637,10 @@ export default function Home() {
                 className={
                   theme === "dark"
                     ? "min-h-[220px] flex-1 resize-none rounded-lg border border-[#374151] bg-black px-4 py-3 pr-14 text-[20px] leading-8 text-white shadow-sm outline-none focus:border-[#2dd4bf] focus:ring-2 focus:ring-[#134e4a]"
-                    : "min-h-[220px] flex-1 resize-none rounded-lg border border-[#d1d5db] bg-white px-4 py-3 pr-14 text-[20px] leading-8 shadow-sm outline-none focus:border-[#0f766e] focus:ring-2 focus:ring-[#99f6e4]"
+                    : "min-h-[220px] flex-1 resize-none rounded-lg border border-[#d1d5db] bg-white px-4 py-3 pr-14 text-[20px] leading-8 text-black shadow-sm outline-none focus:border-[#0f766e] focus:ring-2 focus:ring-[#99f6e4]"
                 }
                 onChange={(event) => {
-                  updateText(event.target.value);
-                  updateCursorWord(event.currentTarget);
+                  updateTextFromTextarea(event.currentTarget);
                 }}
                 onBlur={() => {
                   setIsTextFocused(false);
@@ -458,12 +652,47 @@ export default function Home() {
                 onKeyUp={(event) => {
                   updateCursorWord(event.currentTarget);
                 }}
+                onScroll={(event) => {
+                  updateCursorWord(event.currentTarget);
+                }}
                 onSelect={(event) => {
                   updateCursorWord(event.currentTarget);
                 }}
+                ref={textareaRef}
                 spellCheck={false}
                 value={text}
               />
+              {autocompleteSuggestions.length > 0 && autocompletePosition ? (
+                <div
+                  aria-hidden="true"
+                  className={
+                    theme === "dark"
+                      ? "autocomplete-overlay border-[#374151] bg-black text-white shadow-lg"
+                      : "autocomplete-overlay border-[#d1d5db] bg-white text-black shadow-lg"
+                  }
+                  style={{
+                    left: autocompletePosition.left,
+                    top: autocompletePosition.top,
+                  }}
+                >
+                  {autocompleteSuggestions.map((suggestion) => (
+                    <span className="autocomplete-overlay__word" key={suggestion}>
+                      <span
+                        aria-hidden="true"
+                        className="autocomplete-overlay__glyph sitelen-pona"
+                      >
+                        {suggestion}
+                      </span>
+                      <span>
+                        <strong>
+                          {suggestion.slice(0, cursorWord.word.length)}
+                        </strong>
+                        {suggestion.slice(cursorWord.word.length)}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <button
                 aria-label={
                   theme === "dark" ? "o ante tawa suno" : "o ante tawa mun"
