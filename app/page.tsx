@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
-const DEFAULT_TEXT = `tenpo+sike 2001 la jan [_sona_olin_nasin_jan_awen] li lon e toki nanpa wan pi+toki+pona
-jan mute pi++ma ale li kepeken e ona
-jan+ale pi ma+tomo o jo+ala e ilo+tawa taso`;
+const DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [_sona_olin_nasin_jan_awen] li lon e toki+pona
+jan [_sona] li jan+lawa pi+toki+pona
+jan mute pi++ma ale li kepeken e ona`;
 
 const SITELEN_FONT_SIZE_STORAGE_KEY = "sitelen-font-size";
 const THEME_STORAGE_KEY = "sitelen-theme";
@@ -14,6 +14,8 @@ const SITELEN_FONT_SIZE_DEFAULT = 40;
 const SITELEN_FONT_SIZE_MIN = 1;
 const SITELEN_FONT_SIZE_MAX = 100;
 const SITELEN_LINE_HEIGHT = 1.16;
+const PNG_CAPTURE_ANIMATION_MS = 1400;
+const PNG_CAPTURE_CLEAR_DELAY_MS = PNG_CAPTURE_ANIMATION_MS + 40;
 const PNG_EXPORT_SCALE_MULTIPLIER = 2;
 
 type CopyState = "idle" | "copied" | "downloaded" | "error";
@@ -252,7 +254,7 @@ export default function Home() {
     const pngButton = pngButtonRef.current;
 
     if (!preview || !pngButton) {
-      return;
+      return Promise.resolve();
     }
 
     const previewRect = preview.getBoundingClientRect();
@@ -281,9 +283,15 @@ export default function Home() {
         top: previewRect.top,
       } as CSSProperties,
     });
-    window.setTimeout(() => {
-      setCaptureAnimation(null);
-    }, 1440);
+
+    return new Promise<void>((resolve) => {
+      window.setTimeout(() => {
+        resolve();
+      }, PNG_CAPTURE_ANIMATION_MS);
+      window.setTimeout(() => {
+        setCaptureAnimation(null);
+      }, PNG_CAPTURE_CLEAR_DELAY_MS);
+    });
   }
 
   async function copyPng() {
@@ -295,7 +303,7 @@ export default function Home() {
 
     try {
       setCopyState("idle");
-      animatePngCapture();
+      const captureAnimationFinished = animatePngCapture();
 
       const computed = window.getComputedStyle(preview);
       const rect = preview.getBoundingClientRect();
@@ -370,6 +378,7 @@ export default function Home() {
         await navigator.clipboard.write([
           new ClipboardItem({ [blob.type]: blob }),
         ]);
+        await captureAnimationFinished;
         setCopyState("copied");
         return;
       }
@@ -379,6 +388,7 @@ export default function Home() {
       link.download = "sitelen-toki.png";
       link.click();
       URL.revokeObjectURL(link.href);
+      await captureAnimationFinished;
       setCopyState("downloaded");
     } catch (error) {
       console.error(error);
@@ -488,7 +498,6 @@ export default function Home() {
                 >
                   {cursorWord.word}
                 </span>
-                {": "}
                 {definitions[cursorWord.word] ?? "sona ala"}
               </p>
             ) : null}
