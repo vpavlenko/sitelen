@@ -521,10 +521,10 @@ export default function Home() {
                 type="button"
               >
                 {copyState === "copied"
-                  ? "PNG li lon poki"
+                  ? "sitelen PNG li lon poki"
                   : copyState === "downloaded"
-                    ? "PNG li kama"
-                    : "o pana e PNG"}
+                    ? "sitelen PNG li kama"
+                    : "o pana e sitelen PNG"}
               </button>
             </div>
             <div
@@ -566,7 +566,8 @@ export default function Home() {
 
         {copyState === "error" ? (
           <p className="text-sm font-medium text-[#b91c1c]">
-            pali PNG li pakala. ken la ilo ni li wile e HTTPS anu localhost.
+            pali sitelen PNG li pakala. ken la ilo ni li wile e HTTPS anu
+            localhost.
           </p>
         ) : null}
       </div>

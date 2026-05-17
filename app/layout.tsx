@@ -11,7 +11,8 @@ const elmsSans = Elms_Sans({
 
 export const metadata: Metadata = {
   title: "ilo pi sitelen pona",
-  description: "o ante e toki pona tawa sitelen pona. o pana e ona sama PNG.",
+  description:
+    "o ante e toki pona tawa sitelen pona. o pana e ona sama sitelen PNG.",
   icons: {
     icon: "/favicon.svg",
   },
