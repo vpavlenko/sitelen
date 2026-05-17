@@ -32,7 +32,7 @@ type CaptureAnimation = {
   width: number;
 };
 
-function getInitialFontSize() {
+function getSavedFontSize() {
   if (typeof window === "undefined") {
     return SITELEN_FONT_SIZE_DEFAULT;
   }
@@ -53,7 +53,7 @@ function getInitialFontSize() {
   return SITELEN_FONT_SIZE_DEFAULT;
 }
 
-function getInitialTheme(): Theme {
+function getSavedTheme(): Theme {
   if (typeof window === "undefined") {
     return "light";
   }
@@ -63,7 +63,7 @@ function getInitialTheme(): Theme {
     : "light";
 }
 
-function getInitialText() {
+function getSavedText() {
   if (typeof window === "undefined") {
     return DEFAULT_TEXT;
   }
@@ -152,9 +152,9 @@ function renderSitelenText(text: string, cursorWord: CursorWord) {
 }
 
 export default function Home() {
-  const [text, setText] = useState(getInitialText);
-  const [fontSize, setFontSize] = useState(getInitialFontSize);
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [text, setText] = useState(DEFAULT_TEXT);
+  const [fontSize, setFontSize] = useState(SITELEN_FONT_SIZE_DEFAULT);
+  const [theme, setTheme] = useState<Theme>("light");
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [captureAnimation, setCaptureAnimation] =
     useState<CaptureAnimation | null>(null);
@@ -169,6 +169,18 @@ export default function Home() {
   const [isTextFocused, setIsTextFocused] = useState(false);
   const pngButtonRef = useRef<HTMLButtonElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const restoreSavedSettings = window.setTimeout(() => {
+      setText(getSavedText());
+      setFontSize(getSavedFontSize());
+      setTheme(getSavedTheme());
+    }, 0);
+
+    return () => {
+      window.clearTimeout(restoreSavedSettings);
+    };
+  }, []);
 
   useEffect(() => {
     let isActive = true;
