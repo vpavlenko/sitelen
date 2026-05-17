@@ -165,6 +165,22 @@ function getWordAtCursor(value: string, cursor: number): CursorWord {
   };
 }
 
+function getLastWordBeforeCursor(value: string, cursor: number) {
+  let end = cursor;
+
+  while (end > 0 && !/[a-z]/i.test(value[end - 1])) {
+    end -= 1;
+  }
+
+  let start = end;
+
+  while (start > 0 && /[a-z]/i.test(value[start - 1])) {
+    start -= 1;
+  }
+
+  return value.slice(start, end).toLowerCase();
+}
+
 function emptyCursorWord(): CursorWord {
   return {
     cursor: 0,
@@ -611,7 +627,9 @@ export default function Home() {
     }
   }
 
-  const cursorDefinition = definitions[cursorWord.word];
+  const definitionWord =
+    cursorWord.word || getLastWordBeforeCursor(text, cursorWord.cursor);
+  const cursorDefinition = definitions[definitionWord];
   const autocompleteMatches =
     isTextFocused &&
     autocompletePosition &&
@@ -729,7 +747,7 @@ export default function Home() {
                   : "flex min-h-6 items-center gap-2 text-[16px] leading-6 text-[#374151]"
               }
             >
-              {isTextFocused && cursorWord.word && cursorDefinition ? (
+              {isTextFocused && definitionWord && cursorDefinition ? (
                 <>
                   <span
                     aria-hidden="true"
@@ -739,16 +757,16 @@ export default function Home() {
                         : "sitelen-pona text-2xl leading-none text-[#0f766e]"
                     }
                   >
-                    {cursorWord.word}
+                    {definitionWord}
                   </span>
                   <span
                     className={
                       theme === "dark"
                         ? "font-semibold text-[#5eead4]"
                         : "font-semibold text-[#0f766e]"
-                    }
+                      }
                   >
-                    {cursorWord.word}
+                    {definitionWord}
                   </span>
                   {cursorDefinition}
                 </>
