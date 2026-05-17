@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
-const DEFAULT_TEXT = `tenpo+sike 2001 la jan [_sona_olin_nasin_jan_awen] li lon e toki nanpa wan pi+toki+pona.
-jan mute pi++ma ale li kepeken e ona.
-jan+ale pi ma+tomo o jo+ala e ilo+tawa taso!`;
+const DEFAULT_TEXT = `tenpo+sike 2001 la jan [_sona_olin_nasin_jan_awen] li lon e toki nanpa wan pi+toki+pona
+jan mute pi++ma ale li kepeken e ona
+jan+ale pi ma+tomo o jo+ala e ilo+tawa taso`;
 
 const SITELEN_FONT_SIZE_STORAGE_KEY = "sitelen-font-size";
 const THEME_STORAGE_KEY = "sitelen-theme";
@@ -531,7 +531,7 @@ export default function Home() {
                   type="button"
                 >
                   <span className="sitelen-pona text-2xl leading-none">
-                    o pana e sitelen
+                    pana
                   </span>
                 </button>
                 {copyState === "copied" || copyState === "downloaded" ? (
