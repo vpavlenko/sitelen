@@ -17,6 +17,10 @@ const SITELEN_LINE_HEIGHT = 1.16;
 const PNG_CAPTURE_ANIMATION_MS = 900;
 const PNG_CAPTURE_CLEAR_DELAY_MS = PNG_CAPTURE_ANIMATION_MS + 40;
 const PNG_EXPORT_SCALE_MULTIPLIER = 2;
+const PNG_CAPTURE_PADDING_BOTTOM = 0;
+const PNG_CAPTURE_PADDING_LEFT = 10;
+const PNG_CAPTURE_PADDING_RIGHT = 10;
+const PNG_CAPTURE_PADDING_TOP = 6;
 const SINGLE_GLYPH_FILTER_FONT_SIZE = 64;
 const SINGLE_GLYPH_WIDTH_TOLERANCE = 1.35;
 
@@ -317,6 +321,13 @@ function renderSitelenText(text: string, cursorWord: CursorWord, theme: Theme) {
   );
 }
 
+const PNG_CAPTURE_PADDING_STYLE = {
+  paddingBottom: PNG_CAPTURE_PADDING_BOTTOM,
+  paddingLeft: PNG_CAPTURE_PADDING_LEFT,
+  paddingRight: PNG_CAPTURE_PADDING_RIGHT,
+  paddingTop: PNG_CAPTURE_PADDING_TOP,
+} satisfies CSSProperties;
+
 export default function Home() {
   const [text, setText] = useState(DEFAULT_TEXT);
   const [fontSize, setFontSize] = useState(SITELEN_FONT_SIZE_DEFAULT);
@@ -544,9 +555,10 @@ export default function Home() {
     const scale =
       Math.max(2, window.devicePixelRatio || 1) *
       PNG_EXPORT_SCALE_MULTIPLIER;
-    const paddingX = Number.parseFloat(computed.paddingLeft) || 32;
-    const paddingY = Number.parseFloat(computed.paddingTop) || 32;
-    const maxTextWidth = Math.max(1, Math.ceil(rect.width - paddingX * 2));
+    const maxTextWidth = Math.max(
+      1,
+      Math.ceil(rect.width - PNG_CAPTURE_PADDING_LEFT - PNG_CAPTURE_PADDING_RIGHT),
+    );
     const renderedFontSize =
       Number.parseFloat(computed.fontSize) || SITELEN_FONT_SIZE_DEFAULT;
     const lineHeight = renderedFontSize * SITELEN_LINE_HEIGHT;
@@ -569,8 +581,14 @@ export default function Home() {
       1,
       ...lines.map((line) => Math.ceil(measureContext.measureText(line).width)),
     );
-    const width = Math.ceil(paddingX * 2 + textWidth);
-    const height = Math.ceil(paddingY * 2 + lines.length * lineHeight);
+    const width = Math.ceil(
+      PNG_CAPTURE_PADDING_LEFT + textWidth + PNG_CAPTURE_PADDING_RIGHT,
+    );
+    const height = Math.ceil(
+      PNG_CAPTURE_PADDING_TOP +
+        lines.length * lineHeight +
+        PNG_CAPTURE_PADDING_BOTTOM,
+    );
 
     const canvas = document.createElement("canvas");
     canvas.width = width * scale;
@@ -593,7 +611,11 @@ export default function Home() {
     context.textRendering = "optimizeLegibility";
 
     lines.forEach((line, index) => {
-      context.fillText(line, paddingX, paddingY + index * lineHeight);
+      context.fillText(
+        line,
+        PNG_CAPTURE_PADDING_LEFT,
+        PNG_CAPTURE_PADDING_TOP + index * lineHeight,
+      );
     });
 
     return new Promise<Blob>((resolve, reject) => {
@@ -895,7 +917,7 @@ export default function Home() {
             </p>
           </label>
 
-          <div className="flex min-h-[360px] flex-1 flex-col gap-3">
+          <div className="flex flex-col gap-3">
             <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
               <label
                 className={
@@ -946,12 +968,13 @@ export default function Home() {
               ref={previewRef}
               className={
                 theme === "dark"
-                  ? "sitelen-pona relative min-h-[360px] flex-1 whitespace-pre-wrap rounded-lg border border-[#374151] bg-black px-4 py-3 text-white shadow-sm"
-                  : "sitelen-pona relative min-h-[360px] flex-1 whitespace-pre-wrap rounded-lg border border-[#d1d5db] bg-white px-4 py-3 shadow-sm"
+                  ? "sitelen-pona relative whitespace-pre-wrap rounded-lg border border-[#374151] bg-black text-white shadow-sm"
+                  : "sitelen-pona relative whitespace-pre-wrap rounded-lg border border-[#d1d5db] bg-white shadow-sm"
               }
               style={{
                 fontSize,
                 lineHeight: SITELEN_LINE_HEIGHT,
+                ...PNG_CAPTURE_PADDING_STYLE,
               }}
             >
               <a
@@ -995,11 +1018,12 @@ export default function Home() {
             aria-hidden="true"
             className={
               theme === "dark"
-                ? "sitelen-pona png-capture-layer whitespace-pre-wrap rounded-lg border border-[#374151] bg-black px-4 py-3 text-white shadow-sm"
-                : "sitelen-pona png-capture-layer whitespace-pre-wrap rounded-lg border border-[#d1d5db] bg-white px-4 py-3 text-black shadow-sm"
+                ? "sitelen-pona png-capture-layer whitespace-pre-wrap rounded-lg border border-[#374151] bg-black text-white shadow-sm"
+                : "sitelen-pona png-capture-layer whitespace-pre-wrap rounded-lg border border-[#d1d5db] bg-white text-black shadow-sm"
             }
             style={{
               ...captureAnimation.style,
+              ...PNG_CAPTURE_PADDING_STYLE,
               height: captureAnimation.height,
               width: captureAnimation.width,
             }}
