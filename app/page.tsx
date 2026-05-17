@@ -300,6 +300,75 @@ export default function Home() {
     });
   }
 
+  async function createPngBlob(preview: HTMLDivElement, textToExport: string) {
+    const computed = window.getComputedStyle(preview);
+    const rect = preview.getBoundingClientRect();
+    const scale =
+      Math.max(2, window.devicePixelRatio || 1) *
+      PNG_EXPORT_SCALE_MULTIPLIER;
+    const paddingX = Number.parseFloat(computed.paddingLeft) || 32;
+    const paddingY = Number.parseFloat(computed.paddingTop) || 32;
+    const maxTextWidth = Math.max(1, Math.ceil(rect.width - paddingX * 2));
+    const renderedFontSize =
+      Number.parseFloat(computed.fontSize) || SITELEN_FONT_SIZE_DEFAULT;
+    const lineHeight = renderedFontSize * SITELEN_LINE_HEIGHT;
+
+    if ("fonts" in document) {
+      await document.fonts.load(`${renderedFontSize * scale}px "Linja Pona"`);
+      await document.fonts.ready;
+    }
+
+    const measureCanvas = document.createElement("canvas");
+    const measureContext = measureCanvas.getContext("2d");
+
+    if (!measureContext) {
+      throw new Error("Could not create canvas context.");
+    }
+
+    measureContext.font = `${renderedFontSize}px "Linja Pona", sans-serif`;
+    const lines = wrapCanvasText(measureContext, textToExport, maxTextWidth);
+    const textWidth = Math.max(
+      1,
+      ...lines.map((line) => Math.ceil(measureContext.measureText(line).width)),
+    );
+    const width = Math.ceil(paddingX * 2 + textWidth);
+    const height = Math.ceil(paddingY * 2 + lines.length * lineHeight);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Could not create canvas context.");
+    }
+
+    context.scale(scale, scale);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.fillStyle = computed.backgroundColor || "#fffdf8";
+    context.fillRect(0, 0, width, height);
+    context.fillStyle = computed.color || "#15130e";
+    context.font = `${renderedFontSize}px "Linja Pona", sans-serif`;
+    context.textBaseline = "top";
+    context.textRendering = "optimizeLegibility";
+
+    lines.forEach((line, index) => {
+      context.fillText(line, paddingX, paddingY + index * lineHeight);
+    });
+
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(new Error("Could not create PNG."));
+        }
+      }, "image/png");
+    });
+  }
+
   async function copyPng() {
     const preview = previewRef.current;
 
@@ -310,85 +379,18 @@ export default function Home() {
     try {
       setCopyState("idle");
       const captureAnimationFinished = animatePngCapture();
-
-      const computed = window.getComputedStyle(preview);
-      const rect = preview.getBoundingClientRect();
-      const scale =
-        Math.max(2, window.devicePixelRatio || 1) *
-        PNG_EXPORT_SCALE_MULTIPLIER;
-      const paddingX = Number.parseFloat(computed.paddingLeft) || 32;
-      const paddingY = Number.parseFloat(computed.paddingTop) || 32;
-      const maxTextWidth = Math.max(1, Math.ceil(rect.width - paddingX * 2));
-      const renderedFontSize =
-        Number.parseFloat(computed.fontSize) || SITELEN_FONT_SIZE_DEFAULT;
-      const lineHeight = renderedFontSize * SITELEN_LINE_HEIGHT;
-
-      if ("fonts" in document) {
-        await document.fonts.load(
-          `${renderedFontSize * scale}px "Linja Pona"`,
-        );
-        await document.fonts.ready;
-      }
-
-      const measureCanvas = document.createElement("canvas");
-      const measureContext = measureCanvas.getContext("2d");
-
-      if (!measureContext) {
-        throw new Error("Could not create canvas context.");
-      }
-
-      measureContext.font = `${renderedFontSize}px "Linja Pona", sans-serif`;
-      const lines = wrapCanvasText(measureContext, text, maxTextWidth);
-      const textWidth = Math.max(
-        1,
-        ...lines.map((line) => Math.ceil(measureContext.measureText(line).width)),
-      );
-      const width = Math.ceil(paddingX * 2 + textWidth);
-      const height = Math.ceil(paddingY * 2 + lines.length * lineHeight);
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-
-      const context = canvas.getContext("2d");
-
-      if (!context) {
-        throw new Error("Could not create canvas context.");
-      }
-
-      context.scale(scale, scale);
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
-      context.fillStyle = computed.backgroundColor || "#fffdf8";
-      context.fillRect(0, 0, width, height);
-      context.fillStyle = computed.color || "#15130e";
-      context.font = `${renderedFontSize}px "Linja Pona", sans-serif`;
-      context.textBaseline = "top";
-      context.textRendering = "optimizeLegibility";
-
-      lines.forEach((line, index) => {
-        context.fillText(line, paddingX, paddingY + index * lineHeight);
-      });
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((result) => {
-          if (result) {
-            resolve(result);
-          } else {
-            reject(new Error("Could not create PNG."));
-          }
-        }, "image/png");
-      });
+      const pngBlob = Promise.resolve().then(() => createPngBlob(preview, text));
 
       if (navigator.clipboard && "ClipboardItem" in window) {
         await navigator.clipboard.write([
-          new ClipboardItem({ [blob.type]: blob }),
+          new ClipboardItem({ "image/png": pngBlob }),
         ]);
         await captureAnimationFinished;
         setCopyState("copied");
         return;
       }
 
+      const blob = await pngBlob;
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "sitelen-toki.png";
