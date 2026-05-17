@@ -15,6 +15,7 @@ const SITELEN_FONT_SIZE_DEFAULT = 40;
 const SITELEN_FONT_SIZE_MIN = 1;
 const SITELEN_FONT_SIZE_MAX = 100;
 const SITELEN_LINE_HEIGHT = 1.16;
+const PNG_EXPORT_SCALE_MULTIPLIER = 2;
 
 type CopyState = "idle" | "copied" | "downloaded" | "error";
 type Definitions = Record<string, string>;
@@ -283,20 +284,24 @@ export default function Home() {
       setCopyState("idle");
       animatePngCapture();
 
-      if ("fonts" in document) {
-        await document.fonts.load('72px "Linja Pona"');
-        await document.fonts.ready;
-      }
-
       const computed = window.getComputedStyle(preview);
       const rect = preview.getBoundingClientRect();
-      const scale = Math.max(2, window.devicePixelRatio || 1);
+      const scale =
+        Math.max(2, window.devicePixelRatio || 1) *
+        PNG_EXPORT_SCALE_MULTIPLIER;
       const paddingX = Number.parseFloat(computed.paddingLeft) || 32;
       const paddingY = Number.parseFloat(computed.paddingTop) || 32;
       const maxTextWidth = Math.max(1, Math.ceil(rect.width - paddingX * 2));
       const renderedFontSize =
         Number.parseFloat(computed.fontSize) || SITELEN_FONT_SIZE_DEFAULT;
       const lineHeight = renderedFontSize * SITELEN_LINE_HEIGHT;
+
+      if ("fonts" in document) {
+        await document.fonts.load(
+          `${renderedFontSize * scale}px "Linja Pona"`,
+        );
+        await document.fonts.ready;
+      }
 
       const measureCanvas = document.createElement("canvas");
       const measureContext = measureCanvas.getContext("2d");
@@ -325,6 +330,8 @@ export default function Home() {
       }
 
       context.scale(scale, scale);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
       context.fillStyle = computed.backgroundColor || "#fffdf8";
       context.fillRect(0, 0, width, height);
       context.fillStyle = computed.color || "#15130e";
@@ -378,12 +385,12 @@ export default function Home() {
         <header
           className={
             theme === "dark"
-              ? "flex items-center justify-between gap-4 border-b border-[#374151] pb-4"
-              : "flex items-center justify-between gap-4 border-b border-[#d1d5db] pb-4"
+              ? "flex items-center justify-between gap-4  pb-4"
+              : "flex items-center justify-between gap-4  pb-4"
           }
         >
           <h1 className="mt-1 text-3xl font-semibold md:text-4xl">
-            ilo sitelen pona
+            ilo pi sitelen pona
           </h1>
           <button
             aria-label={
