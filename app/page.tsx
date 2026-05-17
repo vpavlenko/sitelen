@@ -73,6 +73,26 @@ function getSavedText() {
   return window.localStorage.getItem(TEXT_STORAGE_KEY) ?? DEFAULT_TEXT;
 }
 
+function formatTokiPonaCount(value: number) {
+  const parts: string[] = [];
+  let remaining = Math.max(0, Math.floor(value));
+
+  for (const [word, amount] of [
+    ["ale", 100],
+    ["mute", 20],
+    ["luka", 5],
+    ["tu", 2],
+    ["wan", 1],
+  ] as const) {
+    while (remaining >= amount) {
+      parts.push(word);
+      remaining -= amount;
+    }
+  }
+
+  return parts.join(" ");
+}
+
 function wrapCanvasText(
   context: CanvasRenderingContext2D,
   text: string,
@@ -533,8 +553,11 @@ export default function Home() {
                   type="range"
                   value={fontSize}
                 />
-                <span className="min-w-[2ch] shrink-0 tabular-nums">
-                  {fontSize}
+                <span
+                  aria-label={`${fontSize}`}
+                  className="sitelen-pona min-w-[8ch] shrink text-2xl leading-none"
+                >
+                  {formatTokiPonaCount(fontSize)}
                 </span>
               </label>
               <div className="flex shrink-0 items-end">
