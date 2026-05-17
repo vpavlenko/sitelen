@@ -10,12 +10,7 @@ const elmsSans = Elms_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ilo pi sitelen+pona",
-  description:
-    "o ante e toki pona tawa sitelen+pona. o pana e ona sama sitelen.",
-  icons: {
-    icon: "/favicon.svg",
-  },
+  title: "o toki kepeken sitelen pona",
 };
 
 export default function RootLayout({

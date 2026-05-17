@@ -54,13 +54,8 @@ textarea {
 }
 
 .theme-button {
-  display: flex;
-  width: 2.75rem;
-  height: 2.75rem;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  border-radius: 0.375rem;
   border: 1px solid;
 }
 
@@ -79,30 +74,46 @@ textarea {
   line-height: 1;
 }
 
+.mama-link[data-theme="light"]:hover {
+  color: #0f766e;
+}
+
+.mama-link[data-theme="dark"]:hover {
+  color: #5eead4;
+}
+
+.mama-link:active {
+  transform: scale(0.9);
+}
+
 .theme-button,
 .png-button,
 .icon-button {
-  cursor: pointer;
-}
-
-.png-button {
+  display: inline-flex;
   width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.375rem;
-  border: 1px solid transparent;
-  font-size: 0.875rem;
-  font-weight: 600;
-  justify-content: center;
-}
-
-.icon-button {
-  display: flex;
-  width: 2.75rem;
+  min-width: 2.75rem;
   height: 2.75rem;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   border-radius: 0.375rem;
+}
+
+.png-button {
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.icon-button {
   border: 1px solid;
+}
+
+.textarea-corner-button {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  border-radius: 0.375rem 0 0.5rem 0;
 }
 
 .png-button:focus,
@@ -127,10 +138,6 @@ textarea {
   border-color: #d1d5db;
 }
 
-.theme-button[data-theme="light"] .theme-button__glyph {
-  color: #2563eb;
-}
-
 .theme-button[data-theme="dark"],
 .png-button[data-theme="dark"],
 .icon-button[data-theme="dark"] {
@@ -144,25 +151,26 @@ textarea {
 .theme-button[data-theme="light"]:hover,
 .png-button[data-theme="light"]:hover,
 .icon-button[data-theme="light"]:hover {
-  background: #000000;
-  border-color: #000000;
+  background: #0f766e;
+  border-color: #0f766e;
   color: #ffffff;
 }
 
 .theme-button[data-theme="dark"]:hover,
 .png-button[data-theme="dark"]:hover,
 .icon-button[data-theme="dark"]:hover {
-  background: #ffffff;
-  border-color: #000000;
-  color: #000000;
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
 }
 
 .theme-button:active,
 .png-button:active,
 .icon-button:active {
   transform: scale(0.9);
-  background: #fde047;
-  color: #000000;
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
 }
 
 .png-capture-layer {
@@ -170,7 +178,7 @@ textarea {
   z-index: 50;
   pointer-events: none;
   overflow: hidden;
-  animation: png-capture 1400ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation: png-capture 900ms linear forwards;
   transform-origin: top left;
   will-change: transform, opacity;
 }
@@ -181,14 +189,14 @@ textarea {
     transform: translate3d(0, 0, 0) scale(1);
   }
 
-  28.571% {
+  44.444% {
     opacity: 0.92;
-    transform: translate3d(30px, 30px, 0) scale(1);
+    transform: translate3d(10px, 10px, 0) scale(1);
   }
 
   100% {
-    opacity: 0;
+    opacity: 0.92;
     transform: translate3d(var(--png-capture-x), var(--png-capture-y), 0)
-      scale(0.12);
+      scale(0);
   }
 }
