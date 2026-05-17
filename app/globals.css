@@ -53,119 +53,33 @@ textarea {
   text-transform: none;
 }
 
-.theme-switch {
-  position: relative;
-  width: 4rem;
-  height: 2rem;
-  padding: 0.25rem;
+.theme-button {
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  border-radius: 9999px;
+  border-radius: 0.375rem;
   border: 1px solid;
 }
 
-.theme-switch:focus {
+.theme-button:focus {
   outline: none;
 }
 
-.theme-switch:focus-visible {
+.theme-button:focus-visible {
   box-shadow:
     0 0 0 2px var(--focus-ring-offset),
     0 0 0 4px var(--focus-ring);
 }
 
-.theme-switch[data-theme="light"] {
-  --focus-ring: #0f766e;
-  --focus-ring-offset: #ffffff;
-  background: #ffffff;
-  border-color: #d1d5db;
+.theme-button__glyph {
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
-.theme-switch[data-theme="dark"] {
-  --focus-ring: #2dd4bf;
-  --focus-ring-offset: #000000;
-  background: #000000;
-  border-color: #4b5563;
-}
-
-.theme-switch[data-theme="light"]:hover {
-  background: #000000;
-}
-
-.theme-switch[data-theme="dark"]:hover {
-  background: #ffffff;
-}
-
-.theme-switch__icon {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.theme-switch__icon--sun {
-  left: 0.5rem;
-}
-
-.theme-switch__icon--moon {
-  right: 0.5rem;
-}
-
-.theme-switch[data-theme="light"] .theme-switch__icon--sun {
-  color: #f59e0b;
-}
-
-.theme-switch[data-theme="light"] .theme-switch__icon--moon {
-  color: #9ca3af;
-}
-
-.theme-switch[data-theme="dark"] .theme-switch__icon--sun {
-  color: #9ca3af;
-}
-
-.theme-switch[data-theme="dark"] .theme-switch__icon--moon {
-  color: #93c5fd;
-}
-
-.theme-switch[data-theme="light"]:hover .theme-switch__icon,
-.theme-switch[data-theme="dark"]:hover .theme-switch__icon {
-  color: var(--theme-switch-hover-icon);
-}
-
-.theme-switch[data-theme="light"] {
-  --theme-switch-hover-icon: #ffffff;
-}
-
-.theme-switch[data-theme="dark"] {
-  --theme-switch-hover-icon: #000000;
-}
-
-.theme-switch__thumb {
-  position: absolute;
-  top: 50%;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 9999px;
-  transform: translateY(-50%);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
-}
-
-.theme-switch[data-theme="light"] .theme-switch__thumb {
-  left: 0.25rem;
-  background: #000000;
-}
-
-.theme-switch[data-theme="dark"] .theme-switch__thumb {
-  left: 2.25rem;
-  background: #ffffff;
-}
-
-.theme-switch[data-theme="light"]:hover .theme-switch__thumb {
-  background: #ffffff;
-}
-
-.theme-switch[data-theme="dark"]:hover .theme-switch__thumb {
-  background: #000000;
-}
-
+.theme-button,
 .png-button,
 .icon-button {
   cursor: pointer;
@@ -202,32 +116,8 @@ textarea {
     0 0 0 4px var(--focus-ring);
 }
 
-.png-button[data-theme="light"] {
-  --focus-ring: #0f766e;
-  --focus-ring-offset: #ffffff;
-  background: #000000;
-  color: #ffffff;
-}
-
-.png-button[data-theme="dark"] {
-  --focus-ring: #2dd4bf;
-  --focus-ring-offset: #000000;
-  background: #ffffff;
-  color: #000000;
-}
-
-.png-button[data-theme="light"]:hover {
-  background: #ffffff;
-  border-color: #000000;
-  color: #000000;
-}
-
-.png-button[data-theme="dark"]:hover {
-  background: #000000;
-  border-color: #000000;
-  color: #ffffff;
-}
-
+.theme-button[data-theme="light"],
+.png-button[data-theme="light"],
 .icon-button[data-theme="light"] {
   --focus-ring: #0f766e;
   --focus-ring-offset: #ffffff;
@@ -236,6 +126,8 @@ textarea {
   border-color: #d1d5db;
 }
 
+.theme-button[data-theme="dark"],
+.png-button[data-theme="dark"],
 .icon-button[data-theme="dark"] {
   --focus-ring: #2dd4bf;
   --focus-ring-offset: #000000;
@@ -244,18 +136,23 @@ textarea {
   border-color: #4b5563;
 }
 
+.theme-button[data-theme="light"]:hover,
+.png-button[data-theme="light"]:hover,
 .icon-button[data-theme="light"]:hover {
   background: #000000;
   border-color: #000000;
   color: #ffffff;
 }
 
+.theme-button[data-theme="dark"]:hover,
+.png-button[data-theme="dark"]:hover,
 .icon-button[data-theme="dark"]:hover {
   background: #ffffff;
   border-color: #000000;
   color: #000000;
 }
 
+.theme-button:active,
 .png-button:active,
 .icon-button:active {
   transform: scale(0.9);
@@ -281,7 +178,7 @@ textarea {
 
   28.571% {
     opacity: 0.92;
-    transform: translate3d(10px, 10px, 0) scale(1);
+    transform: translate3d(30px, 30px, 0) scale(1);
   }
 
   100% {

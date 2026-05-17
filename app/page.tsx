@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { Moon, Sun, Trash2 } from "lucide-react";
 
 const DEFAULT_TEXT = `tenpo+sike 2001 la jan [_sona_olin_nasin_jan_awen] li lon e toki nanpa wan pi+toki+pona.
 jan mute pi++ma ale li kepeken e ona.
@@ -204,6 +203,20 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    if (copyState !== "copied" && copyState !== "downloaded") {
+      return;
+    }
+
+    const clearToast = window.setTimeout(() => {
+      setCopyState("idle");
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(clearToast);
+    };
+  }, [copyState]);
+
   function updateCursorWord(element: HTMLTextAreaElement) {
     setCursorWord(getWordAtCursor(element.value, element.selectionStart));
   }
@@ -389,29 +402,25 @@ export default function Home() {
               : "flex items-center justify-between gap-4  pb-4"
           }
         >
-          <h1 className="mt-1 text-3xl font-semibold md:text-4xl">
-            ilo pi sitelen pona
+          <h1 className="sitelen-pona mt-1 text-4xl font-semibold md:text-5xl">
+            o toki kepeken sitelen+pona
           </h1>
           <button
             aria-label={
-              theme === "dark" ? "o ante tawa suno" : "o ante tawa pimeja"
+              theme === "dark" ? "o ante tawa suno" : "o ante tawa mun"
             }
             aria-pressed={theme === "dark"}
-            className="theme-switch"
+            className="theme-button"
             data-theme={theme}
             onClick={toggleTheme}
             type="button"
           >
-            <span className="sr-only">
-              {theme === "dark" ? "suno" : "pimeja"}
+            <span
+              aria-hidden="true"
+              className="sitelen-pona theme-button__glyph"
+            >
+              {theme === "dark" ? "suno" : "mun"}
             </span>
-            <span className="theme-switch__icon theme-switch__icon--sun">
-              <Sun aria-hidden="true" size={16} strokeWidth={2.25} />
-            </span>
-            <span className="theme-switch__icon theme-switch__icon--moon">
-              <Moon aria-hidden="true" size={16} strokeWidth={2.25} />
-            </span>
-            <span className="theme-switch__thumb" />
           </button>
         </header>
 
@@ -421,8 +430,8 @@ export default function Home() {
               <textarea
                 className={
                   theme === "dark"
-                    ? "min-h-[220px] flex-1 resize-none rounded-lg border border-[#374151] bg-black px-4 py-3 pr-14 text-lg leading-7 text-white shadow-sm outline-none focus:border-[#2dd4bf] focus:ring-2 focus:ring-[#134e4a]"
-                    : "min-h-[220px] flex-1 resize-none rounded-lg border border-[#d1d5db] bg-white px-4 py-3 pr-14 text-lg leading-7 shadow-sm outline-none focus:border-[#0f766e] focus:ring-2 focus:ring-[#99f6e4]"
+                    ? "min-h-[220px] flex-1 resize-none rounded-lg border border-[#374151] bg-black px-4 py-3 pr-14 text-[20px] leading-8 text-white shadow-sm outline-none focus:border-[#2dd4bf] focus:ring-2 focus:ring-[#134e4a]"
+                    : "min-h-[220px] flex-1 resize-none rounded-lg border border-[#d1d5db] bg-white px-4 py-3 pr-14 text-[20px] leading-8 shadow-sm outline-none focus:border-[#0f766e] focus:ring-2 focus:ring-[#99f6e4]"
                 }
                 onChange={(event) => {
                   updateText(event.target.value);
@@ -451,17 +460,25 @@ export default function Home() {
                 onClick={resetText}
                 type="button"
               >
-                <Trash2 aria-hidden="true" size={18} strokeWidth={2.25} />
+                <span aria-hidden="true" className="sitelen-pona text-2xl">
+                  weka
+                </span>
               </button>
             </div>
             {isTextFocused && cursorWord.word ? (
               <p
                 className={
                   theme === "dark"
-                    ? "min-h-6 text-sm leading-6 text-[#d1d5db]"
-                    : "min-h-6 text-sm leading-6 text-[#374151]"
+                    ? "flex min-h-6 items-center gap-2 text-[16px] leading-6 text-[#d1d5db]"
+                    : "flex min-h-6 items-center gap-2 text-[16px] leading-6 text-[#374151]"
                 }
               >
+                <span
+                  aria-hidden="true"
+                  className="sitelen-pona text-2xl leading-none"
+                >
+                  {cursorWord.word}
+                </span>
                 <span
                   className={
                     theme === "dark"
@@ -474,17 +491,7 @@ export default function Home() {
                 {": "}
                 {definitions[cursorWord.word] ?? "sona ala"}
               </p>
-            ) : (
-              <p
-                className={
-                  theme === "dark"
-                    ? "min-h-6 text-sm leading-6 text-[#9ca3af]"
-                    : "min-h-6 text-sm leading-6 text-[#6b7280]"
-                }
-              >
-                o pana e lupa sitelen lon nimi
-              </p>
-            )}
+            ) : null}
           </label>
 
           <div className="flex min-h-[360px] flex-1 flex-col gap-3">
@@ -496,7 +503,9 @@ export default function Home() {
                     : "flex items-center gap-3 text-sm font-medium text-[#374151]"
                 }
               >
-                <span>nanpa sitelen</span>
+                <span className="sitelen-pona text-2xl leading-none">
+                  nanpa sitelen
+                </span>
                 <input
                   className={
                     theme === "dark"
@@ -513,19 +522,34 @@ export default function Home() {
                 />
                 <span className="w-10 text-right tabular-nums">{fontSize}</span>
               </label>
-              <button
-                className="png-button"
-                data-theme={theme}
-                onClick={copyPng}
-                ref={pngButtonRef}
-                type="button"
-              >
-                {copyState === "copied"
-                  ? "sitelen PNG li lon poki"
-                  : copyState === "downloaded"
-                    ? "sitelen PNG li kama"
-                    : "o pana e sitelen PNG"}
-              </button>
+              <div className="relative flex items-end">
+                <button
+                  className="png-button inline-flex items-center gap-1"
+                  data-theme={theme}
+                  onClick={copyPng}
+                  ref={pngButtonRef}
+                  type="button"
+                >
+                  <span className="sitelen-pona text-2xl leading-none">
+                    o pana e sitelen
+                  </span>
+                </button>
+                {copyState === "copied" || copyState === "downloaded" ? (
+                  <p
+                    className={
+                      theme === "dark"
+                        ? "absolute right-0 top-[calc(100%+0.5rem)] z-10 flex items-center gap-1 whitespace-nowrap rounded-md border border-[#4b5563] bg-black px-3 py-2 text-sm font-medium text-white shadow-lg"
+                        : "absolute right-0 top-[calc(100%+0.5rem)] z-10 flex items-center gap-1 whitespace-nowrap rounded-md border border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-black shadow-lg"
+                    }
+                  >
+                    <span className="sitelen-pona text-xl leading-none">
+                      {copyState === "copied"
+                        ? "sitelen li lon poki tu"
+                        : "sitelen li kama"}
+                    </span>
+                  </p>
+                ) : null}
+              </div>
             </div>
             <div
               ref={previewRef}
@@ -565,9 +589,14 @@ export default function Home() {
         ) : null}
 
         {copyState === "error" ? (
-          <p className="text-sm font-medium text-[#b91c1c]">
-            pali sitelen PNG li pakala. ken la ilo ni li wile e HTTPS anu
-            localhost.
+          <p className="flex flex-wrap items-center gap-x-1 text-sm font-medium text-[#b91c1c]">
+            <span className="sitelen-pona text-xl leading-none">
+              pali sitelen li pakala. ken la ilo ni li wile e
+            </span>
+            <span>HTTPS</span>
+            <span className="sitelen-pona text-xl leading-none">anu</span>
+            <span>localhost</span>
+            <span>.</span>
           </p>
         ) : null}
       </div>
