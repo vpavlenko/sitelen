@@ -145,7 +145,7 @@ function renderSitelenText(text: string, cursorWord: CursorWord) {
   return (
     <>
       {text.slice(0, cursorWord.glyphStart)}
-      <span className="bg-yellow-300 text-black">
+      <span className="bg-[#99f6e4] text-black">
         {text.slice(cursorWord.glyphStart, cursorWord.glyphEnd)}
       </span>
       {text.slice(cursorWord.glyphEnd) || " "}
