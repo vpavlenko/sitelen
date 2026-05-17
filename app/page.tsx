@@ -517,7 +517,7 @@ export default function Home() {
                 }
               >
                 <span className="sitelen-pona shrink-0 text-2xl leading-none">
-                  nanpa sitelen
+                  lili anu suli
                 </span>
                 <input
                   className={
