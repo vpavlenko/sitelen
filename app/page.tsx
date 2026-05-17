@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 
 const DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [_sona_olin_nasin_jan_awen] li lon e toki+pona
 jan [_sona] li jan+lawa pi+toki+pona
@@ -328,6 +328,9 @@ export default function Home() {
   const [cursorWord, setCursorWord] = useState<CursorWord>(emptyCursorWord);
   const [autocompletePosition, setAutocompletePosition] =
     useState<AutocompletePosition | null>(null);
+  const [selectedAutocompleteIndex, setSelectedAutocompleteIndex] = useState<
+    number | null
+  >(null);
   const [isTextFocused, setIsTextFocused] = useState(false);
   const pngButtonRef = useRef<HTMLButtonElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -387,6 +390,7 @@ export default function Home() {
   ) {
     if (nextCursorWord.cursor !== nextCursorWord.end || !nextCursorWord.word) {
       setAutocompletePosition(null);
+      setSelectedAutocompleteIndex(null);
       return;
     }
 
@@ -427,6 +431,7 @@ export default function Home() {
     updateText(DEFAULT_TEXT);
     setCursorWord(emptyCursorWord());
     setAutocompletePosition(null);
+    setSelectedAutocompleteIndex(null);
   }
 
   function updateTextFromTextarea(element: HTMLTextAreaElement) {
@@ -450,19 +455,29 @@ export default function Home() {
       updateText(nextText);
       setCursorWord(nextCursorWord);
       updateAutocompletePosition(element, nextCursorWord);
+      setSelectedAutocompleteIndex(null);
       return;
     }
 
     const completedWord = dictionaryMatches[0];
-    const completedText = `${nextText.slice(
+    insertAutocompleteWord(completedWord, nextText, nextCursorWord);
+  }
+
+  function insertAutocompleteWord(
+    completedWord: string,
+    sourceText = text,
+    sourceCursorWord = cursorWord,
+  ) {
+    const completedText = `${sourceText.slice(
       0,
-      nextCursorWord.start,
-    )}${completedWord}${nextText.slice(nextCursorWord.end)}`;
-    const completedCursor = nextCursorWord.start + completedWord.length;
+      sourceCursorWord.start,
+    )}${completedWord}${sourceText.slice(sourceCursorWord.end)}`;
+    const completedCursor = sourceCursorWord.start + completedWord.length;
 
     updateText(completedText);
     setCursorWord(getWordAtCursor(completedText, completedCursor));
     setAutocompletePosition(null);
+    setSelectedAutocompleteIndex(null);
 
     window.requestAnimationFrame(() => {
       textareaRef.current?.setSelectionRange(completedCursor, completedCursor);
@@ -638,6 +653,80 @@ export default function Home() {
       : [];
   const autocompleteSuggestions =
     autocompleteMatches.length > 1 ? autocompleteMatches.slice(0, 6) : [];
+  const currentAutocompleteIndex = autocompleteSuggestions.length
+    ? Math.min(
+        selectedAutocompleteIndex ?? 0,
+        autocompleteSuggestions.length - 1,
+      )
+    : null;
+
+  function handleAutocompleteKeyDown(
+    event: KeyboardEvent<HTMLTextAreaElement>,
+  ) {
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    const element = event.currentTarget;
+    const eventCursorWord = getWordAtCursor(
+      element.value,
+      element.selectionStart,
+    );
+    const eventSuggestions =
+      eventCursorWord.cursor === eventCursorWord.end
+        ? getDictionaryMatches(definitions, eventCursorWord.word).slice(0, 6)
+        : [];
+
+    const isArrowDown =
+      event.key === "ArrowDown" ||
+      event.key === "Down" ||
+      event.code === "ArrowDown";
+    const isArrowUp =
+      event.key === "ArrowUp" || event.key === "Up" || event.code === "ArrowUp";
+    const isAcceptKey = event.key === "Enter" || event.key === "Tab";
+
+    if (eventSuggestions.length <= 1) {
+      return;
+    }
+
+    if (isArrowDown || isArrowUp) {
+      event.preventDefault();
+      event.stopPropagation();
+      setCursorWord(eventCursorWord);
+      updateAutocompletePosition(element, eventCursorWord);
+      setSelectedAutocompleteIndex((currentIndex) => {
+        if (currentIndex === null) {
+          return isArrowDown ? 1 : eventSuggestions.length - 1;
+        }
+
+        const offset = isArrowDown ? 1 : -1;
+
+        return (
+          (currentIndex + offset + eventSuggestions.length) %
+          eventSuggestions.length
+        );
+      });
+      return;
+    }
+
+    if (!isAcceptKey) {
+      return;
+    }
+
+    const eventSelectedIndex = Math.min(
+      selectedAutocompleteIndex ?? 0,
+      eventSuggestions.length - 1,
+    );
+    const selectedSuggestion = eventSuggestions[eventSelectedIndex];
+
+    if (!selectedSuggestion) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    insertAutocompleteWord(selectedSuggestion, element.value, eventCursorWord);
+  }
 
   return (
     <main
@@ -667,7 +756,20 @@ export default function Home() {
                   setIsTextFocused(true);
                   updateCursorWord(event.currentTarget);
                 }}
+                onKeyDown={handleAutocompleteKeyDown}
+                onKeyDownCapture={handleAutocompleteKeyDown}
                 onKeyUp={(event) => {
+                  if (
+                    event.key === "ArrowDown" ||
+                    event.key === "Down" ||
+                    event.key === "ArrowUp" ||
+                    event.key === "Up" ||
+                    event.key === "Enter" ||
+                    event.key === "Tab"
+                  ) {
+                    return;
+                  }
+
                   updateCursorWord(event.currentTarget);
                 }}
                 onScroll={(event) => {
@@ -682,32 +784,51 @@ export default function Home() {
               />
               {autocompleteSuggestions.length > 0 && autocompletePosition ? (
                 <div
-                  aria-hidden="true"
                   className={
                     theme === "dark"
                       ? "autocomplete-overlay border-[#374151] bg-black text-white shadow-lg"
                       : "autocomplete-overlay border-[#d1d5db] bg-white text-black shadow-lg"
                   }
+                  role="listbox"
                   style={{
                     left: autocompletePosition.left,
                     top: autocompletePosition.top,
                   }}
                 >
-                  {autocompleteSuggestions.map((suggestion) => (
-                    <span className="autocomplete-overlay__word" key={suggestion}>
+                  {autocompleteSuggestions.map((suggestion, index) => (
+                    <button
+                      aria-selected={currentAutocompleteIndex === index}
+                      className={
+                        currentAutocompleteIndex === index
+                          ? "autocomplete-overlay__word autocomplete-overlay__word--selected"
+                          : "autocomplete-overlay__word"
+                      }
+                      key={suggestion}
+                      onClick={() => {
+                        insertAutocompleteWord(suggestion);
+                      }}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                      }}
+                      onMouseEnter={() => {
+                        setSelectedAutocompleteIndex(index);
+                      }}
+                      role="option"
+                      type="button"
+                    >
                       <span
                         aria-hidden="true"
                         className="autocomplete-overlay__glyph sitelen-pona"
                       >
                         {suggestion}
                       </span>
-                      <span>
+                      <span className="autocomplete-overlay__text">
                         <strong>
                           {suggestion.slice(0, cursorWord.word.length)}
                         </strong>
                         {suggestion.slice(cursorWord.word.length)}
                       </span>
-                    </span>
+                    </button>
                   ))}
                 </div>
               ) : null}

@@ -123,7 +123,6 @@ textarea {
   min-width: 8rem;
   max-width: min(18rem, calc(100% - 2rem));
   flex-direction: column;
-  pointer-events: none;
   overflow: hidden;
   border: 1px solid;
   border-radius: 0.375rem;
@@ -135,12 +134,28 @@ textarea {
 }
 
 .autocomplete-overlay__word {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr);
   align-items: center;
+  justify-items: stretch;
   gap: 0.5rem;
   padding: 0 0.75rem;
+  text-align: left;
   white-space: nowrap;
+  width: 100%;
+}
+
+.autocomplete-overlay__word:hover,
+.autocomplete-overlay__word--selected {
+  background: rgb(15 118 110 / 0.14);
+}
+
+.autocomplete-overlay__word:focus {
+  outline: none;
 }
 
 .autocomplete-overlay__glyph {
@@ -148,6 +163,13 @@ textarea {
   font-size: 1.2em;
   line-height: 1;
   text-align: center;
+}
+
+.autocomplete-overlay__text {
+  display: block;
+  min-width: 0;
+  justify-self: stretch;
+  text-align: left;
 }
 
 .autocomplete-overlay strong {
