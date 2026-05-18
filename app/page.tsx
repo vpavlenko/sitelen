@@ -961,8 +961,8 @@ export default function Home() {
                 <p
                   className={
                     theme === "dark"
-                      ? "absolute -bottom-px -right-px z-10 flex items-center gap-1 whitespace-nowrap rounded-br-lg rounded-tl-md border-l border-t border-[#4b5563] bg-black px-3 py-2 text-sm font-medium text-white shadow-lg"
-                      : "absolute -bottom-px -right-px z-10 flex items-center gap-1 whitespace-nowrap rounded-br-lg rounded-tl-md border-l border-t border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-black shadow-lg"
+                      ? "absolute bottom-0 right-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-br-lg rounded-tl-md border-l border-t border-[#4b5563] bg-black px-3 py-2 text-sm font-medium text-white shadow-lg"
+                      : "absolute bottom-0 right-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-br-lg rounded-tl-md border-l border-t border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-black shadow-lg"
                   }
                 >
                   <span className="sitelen-pona text-xl leading-none text-[#0f766e]">
