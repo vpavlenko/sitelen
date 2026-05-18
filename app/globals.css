@@ -116,6 +116,13 @@ textarea {
   border-radius: 0.375rem 0 0.5rem 0;
 }
 
+.pane-corner-button {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  border-radius: 0.375rem 0 0.5rem 0;
+}
+
 .autocomplete-overlay {
   position: absolute;
   z-index: 10;

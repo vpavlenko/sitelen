@@ -765,12 +765,12 @@ export default function Home() {
     <main
       className={
         theme === "dark"
-          ? "flex min-h-screen flex-col bg-black text-white"
-          : "flex min-h-screen flex-col bg-white text-black"
+          ? "flex min-h-dvh flex-col bg-black text-white"
+          : "flex min-h-dvh flex-col bg-white text-black"
       }
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-5 py-6 md:px-8">
-        <section className="flex flex-1 flex-col gap-5">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-5 px-5 py-6 md:px-8">
+        <section className="flex min-h-0 flex-col gap-5">
           <label className="flex flex-col gap-3">
             <div className="relative flex">
               <textarea
@@ -880,8 +880,8 @@ export default function Home() {
             <p
               className={
                 theme === "dark"
-                  ? "flex min-h-6 items-center gap-2 text-[16px] leading-6 text-[#d1d5db]"
-                  : "flex min-h-6 items-center gap-2 text-[16px] leading-6 text-[#374151]"
+                  ? "min-h-12 text-[16px] leading-6 text-[#d1d5db]"
+                  : "min-h-12 text-[16px] leading-6 text-[#374151]"
               }
             >
               {isTextFocused && definitionWord && cursorDefinition ? (
@@ -890,8 +890,8 @@ export default function Home() {
                     aria-hidden="true"
                     className={
                       theme === "dark"
-                        ? "sitelen-pona text-2xl leading-none text-[#5eead4]"
-                        : "sitelen-pona text-2xl leading-none text-[#0f766e]"
+                        ? "sitelen-pona mr-2 inline-block align-middle text-2xl leading-none text-[#5eead4]"
+                        : "sitelen-pona mr-2 inline-block align-middle text-2xl leading-none text-[#0f766e]"
                     }
                   >
                     {definitionWord}
@@ -899,9 +899,9 @@ export default function Home() {
                   <span
                     className={
                       theme === "dark"
-                        ? "font-semibold text-[#5eead4]"
-                        : "font-semibold text-[#0f766e]"
-                      }
+                        ? "mr-2 font-semibold text-[#5eead4]"
+                        : "mr-2 font-semibold text-[#0f766e]"
+                    }
                   >
                     {definitionWord}
                   </span>
@@ -912,6 +912,37 @@ export default function Home() {
           </label>
 
           <div className="flex flex-col gap-3">
+            <label
+              className={
+                theme === "dark"
+                  ? "flex min-h-11 flex-wrap items-center gap-3 text-sm font-medium text-[#d1d5db]"
+                  : "flex min-h-11 flex-wrap items-center gap-3 text-sm font-medium text-[#374151]"
+              }
+            >
+              <span className="sitelen-pona shrink-0 text-2xl leading-none">
+                lili anu suli
+              </span>
+              <input
+                className={
+                  theme === "dark"
+                    ? "w-[150px] cursor-pointer accent-[#2dd4bf]"
+                    : "w-[150px] cursor-pointer accent-[#0f766e]"
+                }
+                max={SITELEN_FONT_SIZE_MAX}
+                min={SITELEN_FONT_SIZE_MIN}
+                onChange={(event) => {
+                  updateFontSize(Number(event.target.value));
+                }}
+                type="range"
+                value={fontSize}
+              />
+              <span
+                aria-label={`${fontSize}`}
+                className="sitelen-pona min-w-[8ch] shrink text-2xl leading-none"
+              >
+                {formatTokiPonaCount(fontSize)}
+              </span>
+            </label>
             <div
               ref={previewRef}
               className={
@@ -923,14 +954,15 @@ export default function Home() {
                 fontSize,
                 lineHeight: SITELEN_LINE_HEIGHT,
                 ...PNG_CAPTURE_PADDING_STYLE,
+                paddingBottom: 64,
               }}
             >
               {copyState === "copied" || copyState === "downloaded" ? (
                 <p
                   className={
                     theme === "dark"
-                      ? "absolute right-0 top-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-bl-md rounded-tr-lg border-b border-l border-[#4b5563] bg-black px-3 py-2 text-sm font-medium text-white shadow-lg"
-                      : "absolute right-0 top-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-bl-md rounded-tr-lg border-b border-l border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-black shadow-lg"
+                      ? "absolute -bottom-px -right-px z-10 flex items-center gap-1 whitespace-nowrap rounded-br-lg rounded-tl-md border-l border-t border-[#4b5563] bg-black px-3 py-2 text-sm font-medium text-white shadow-lg"
+                      : "absolute -bottom-px -right-px z-10 flex items-center gap-1 whitespace-nowrap rounded-br-lg rounded-tl-md border-l border-t border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-black shadow-lg"
                   }
                 >
                   <span className="sitelen-pona text-xl leading-none text-[#0f766e]">
@@ -939,46 +971,9 @@ export default function Home() {
                       : "sitelen li kama"}
                   </span>
                 </p>
-              ) : null}
-              {isTextFocused
-                ? renderSitelenText(text, cursorWord, theme)
-                : text || " "}
-            </div>
-            <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
-              <label
-                className={
-                  theme === "dark"
-                    ? "flex min-w-0 flex-1 items-center gap-3 text-sm font-medium text-[#d1d5db]"
-                    : "flex min-w-0 flex-1 items-center gap-3 text-sm font-medium text-[#374151]"
-                }
-              >
-                <span className="sitelen-pona shrink-0 text-2xl leading-none">
-                  lili anu suli
-                </span>
-                <input
-                  className={
-                    theme === "dark"
-                      ? "w-[200px] cursor-pointer accent-[#2dd4bf]"
-                      : "w-[200px] cursor-pointer accent-[#0f766e]"
-                  }
-                  max={SITELEN_FONT_SIZE_MAX}
-                  min={SITELEN_FONT_SIZE_MIN}
-                  onChange={(event) => {
-                    updateFontSize(Number(event.target.value));
-                  }}
-                  type="range"
-                  value={fontSize}
-                />
-                <span
-                  aria-label={`${fontSize}`}
-                  className="sitelen-pona min-w-[8ch] shrink text-2xl leading-none"
-                >
-                  {formatTokiPonaCount(fontSize)}
-                </span>
-              </label>
-              <div className="flex shrink-0 items-end">
+              ) : (
                 <button
-                  className="png-button inline-flex items-center gap-1"
+                  className="png-button pane-corner-button z-10 inline-flex items-center gap-1"
                   data-theme={theme}
                   onClick={copyPng}
                   ref={pngButtonRef}
@@ -988,7 +983,10 @@ export default function Home() {
                     pana
                   </span>
                 </button>
-              </div>
+              )}
+              {isTextFocused
+                ? renderSitelenText(text, cursorWord, theme)
+                : text || " "}
             </div>
           </div>
         </section>
@@ -1023,7 +1021,7 @@ export default function Home() {
           <span>.</span>
         </p>
       ) : null}
-      <footer className="mt-auto flex w-full items-center justify-between px-5 pb-6 md:px-8">
+      <footer className="mt-auto flex shrink-0 items-center justify-between px-5 pb-6 md:px-8">
         <button
           aria-label={theme === "dark" ? "o ante tawa suno" : "o ante tawa mun"}
           aria-pressed={theme === "dark"}
