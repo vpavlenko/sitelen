@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 
 const DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [_sona_olin_nasin_jan_awen] li lon e toki+pona
@@ -395,6 +395,17 @@ export default function Home() {
     };
   }, [copyState]);
 
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [text]);
+
   function updateAutocompletePosition(
     element: HTMLTextAreaElement,
     nextCursorWord: CursorWord,
@@ -754,19 +765,19 @@ export default function Home() {
     <main
       className={
         theme === "dark"
-          ? "min-h-screen bg-black text-white"
-          : "min-h-screen bg-white text-black"
+          ? "flex min-h-screen flex-col bg-black text-white"
+          : "flex min-h-screen flex-col bg-white text-black"
       }
     >
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 px-5 py-6 md:px-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-5 py-6 md:px-8">
         <section className="flex flex-1 flex-col gap-5">
-          <label className="flex min-h-[220px] flex-col gap-3">
-            <div className="relative flex min-h-[220px] flex-1">
+          <label className="flex flex-col gap-3">
+            <div className="relative flex">
               <textarea
                 className={
                   theme === "dark"
-                    ? "min-h-[220px] flex-1 resize-none rounded-lg border border-[#374151] bg-black px-4 py-3 pr-14 text-[20px] leading-8 text-white shadow-sm outline-none focus:border-[#2dd4bf] focus:ring-2 focus:ring-[#134e4a]"
-                    : "min-h-[220px] flex-1 resize-none rounded-lg border border-[#d1d5db] bg-white px-4 py-3 pr-14 text-[20px] leading-8 text-black shadow-sm outline-none focus:border-[#0f766e] focus:ring-2 focus:ring-[#99f6e4]"
+                    ? "min-h-0 w-full resize-none overflow-hidden rounded-lg border border-[#374151] bg-black px-4 py-3 pr-14 text-[20px] leading-8 text-white shadow-sm outline-none focus:border-[#2dd4bf] focus:ring-2 focus:ring-[#134e4a]"
+                    : "min-h-0 w-full resize-none overflow-hidden rounded-lg border border-[#d1d5db] bg-white px-4 py-3 pr-14 text-[20px] leading-8 text-black shadow-sm outline-none focus:border-[#0f766e] focus:ring-2 focus:ring-[#99f6e4]"
                 }
                 onChange={(event) => {
                   updateTextFromTextarea(event.currentTarget);
@@ -855,23 +866,6 @@ export default function Home() {
                 </div>
               ) : null}
               <button
-                aria-label={
-                  theme === "dark" ? "o ante tawa suno" : "o ante tawa mun"
-                }
-                aria-pressed={theme === "dark"}
-                className="theme-button absolute right-0 top-0 z-20 lg:fixed lg:right-5 lg:top-6"
-                data-theme={theme}
-                onClick={toggleTheme}
-                type="button"
-              >
-                <span
-                  aria-hidden="true"
-                  className="sitelen-pona theme-button__glyph"
-                >
-                  {theme === "dark" ? "suno" : "mun"}
-                </span>
-              </button>
-              <button
                 aria-label="o weka e toki"
                 className="icon-button textarea-corner-button"
                 data-theme={theme}
@@ -918,6 +912,38 @@ export default function Home() {
           </label>
 
           <div className="flex flex-col gap-3">
+            <div
+              ref={previewRef}
+              className={
+                theme === "dark"
+                  ? "sitelen-pona relative whitespace-pre-wrap rounded-lg border border-[#374151] bg-black text-white shadow-sm"
+                  : "sitelen-pona relative whitespace-pre-wrap rounded-lg border border-[#d1d5db] bg-white shadow-sm"
+              }
+              style={{
+                fontSize,
+                lineHeight: SITELEN_LINE_HEIGHT,
+                ...PNG_CAPTURE_PADDING_STYLE,
+              }}
+            >
+              {copyState === "copied" || copyState === "downloaded" ? (
+                <p
+                  className={
+                    theme === "dark"
+                      ? "absolute right-0 top-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-bl-md rounded-tr-lg border-b border-l border-[#4b5563] bg-black px-3 py-2 text-sm font-medium text-white shadow-lg"
+                      : "absolute right-0 top-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-bl-md rounded-tr-lg border-b border-l border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-black shadow-lg"
+                  }
+                >
+                  <span className="sitelen-pona text-xl leading-none text-[#0f766e]">
+                    {copyState === "copied"
+                      ? "sitelen li lon poki tu"
+                      : "sitelen li kama"}
+                  </span>
+                </p>
+              ) : null}
+              {isTextFocused
+                ? renderSitelenText(text, cursorWord, theme)
+                : text || " "}
+            </div>
             <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
               <label
                 className={
@@ -964,52 +990,6 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div
-              ref={previewRef}
-              className={
-                theme === "dark"
-                  ? "sitelen-pona relative whitespace-pre-wrap rounded-lg border border-[#374151] bg-black text-white shadow-sm"
-                  : "sitelen-pona relative whitespace-pre-wrap rounded-lg border border-[#d1d5db] bg-white shadow-sm"
-              }
-              style={{
-                fontSize,
-                lineHeight: SITELEN_LINE_HEIGHT,
-                ...PNG_CAPTURE_PADDING_STYLE,
-              }}
-            >
-              <a
-                aria-label="vpavlenko/sitelen"
-                className={
-                  theme === "dark"
-                    ? "mama-link sitelen-pona absolute bottom-3 right-3 z-20 text-2xl leading-none text-white lg:fixed lg:bottom-6 lg:right-5"
-                    : "mama-link sitelen-pona absolute bottom-3 right-3 z-20 text-2xl leading-none text-black lg:fixed lg:bottom-6 lg:right-5"
-                }
-                data-theme={theme}
-                href="https://github.com/vpavlenko/sitelen"
-                rel="noreferrer"
-                target="_blank"
-              >
-                mama
-              </a>
-              {copyState === "copied" || copyState === "downloaded" ? (
-                <p
-                  className={
-                    theme === "dark"
-                      ? "absolute right-0 top-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-bl-md rounded-tr-lg border-b border-l border-[#4b5563] bg-black px-3 py-2 text-sm font-medium text-white shadow-lg"
-                      : "absolute right-0 top-0 z-10 flex items-center gap-1 whitespace-nowrap rounded-bl-md rounded-tr-lg border-b border-l border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-black shadow-lg"
-                  }
-                >
-                  <span className="sitelen-pona text-xl leading-none text-[#0f766e]">
-                    {copyState === "copied"
-                      ? "sitelen li lon poki tu"
-                      : "sitelen li kama"}
-                  </span>
-                </p>
-              ) : null}
-              {isTextFocused
-                ? renderSitelenText(text, cursorWord, theme)
-                : text || " "}
-            </div>
           </div>
         </section>
 
@@ -1031,19 +1011,46 @@ export default function Home() {
             {text || " "}
           </div>
         ) : null}
-
-        {copyState === "error" ? (
-          <p className="flex flex-wrap items-center gap-x-1 text-sm font-medium text-[#b91c1c]">
-            <span className="sitelen-pona text-xl leading-none">
-              pali sitelen li pakala. ken la ilo ni li wile e
-            </span>
-            <span>HTTPS</span>
-            <span className="sitelen-pona text-xl leading-none">anu</span>
-            <span>localhost</span>
-            <span>.</span>
-          </p>
-        ) : null}
       </div>
+      {copyState === "error" ? (
+        <p className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-1 px-5 pb-3 text-sm font-medium text-[#b91c1c] md:px-8">
+          <span className="sitelen-pona text-xl leading-none">
+            pali sitelen li pakala. ken la ilo ni li wile e
+          </span>
+          <span>HTTPS</span>
+          <span className="sitelen-pona text-xl leading-none">anu</span>
+          <span>localhost</span>
+          <span>.</span>
+        </p>
+      ) : null}
+      <footer className="mt-auto flex w-full items-center justify-between px-5 pb-6 md:px-8">
+        <button
+          aria-label={theme === "dark" ? "o ante tawa suno" : "o ante tawa mun"}
+          aria-pressed={theme === "dark"}
+          className="theme-button"
+          data-theme={theme}
+          onClick={toggleTheme}
+          type="button"
+        >
+          <span aria-hidden="true" className="sitelen-pona theme-button__glyph">
+            {theme === "dark" ? "suno" : "mun"}
+          </span>
+        </button>
+        <a
+          aria-label="vpavlenko/sitelen"
+          className={
+            theme === "dark"
+              ? "mama-link sitelen-pona text-2xl leading-none text-white"
+              : "mama-link sitelen-pona text-2xl leading-none text-black"
+          }
+          data-theme={theme}
+          href="https://github.com/vpavlenko/sitelen"
+          rel="noreferrer"
+          target="_blank"
+        >
+          mama
+        </a>
+      </footer>
     </main>
   );
 }
