@@ -3,11 +3,15 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 
-const DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [_sona_olin_nasin_jan_awen] li lon e toki+pona
+const LINJA_PONA_DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [_sona_olin_nasin_jan_awen] li lon e toki+pona
 jan [_sona] li jan+lawa pi+toki+pona
 jan mute pi++ma ale li toki kepeken ona`;
+const LINJA_LIPAMANKA_DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [sonaolinnasinjanawen] li lon e toki pona
+jan [sona] li jan lawa pi toki pona
+jan mute pi maale li toki kepeken ona`;
 
 const SITELEN_FONT_SIZE_STORAGE_KEY = "sitelen-font-size";
+const SITELEN_FONT_STORAGE_KEY = "sitelen-font";
 const THEME_STORAGE_KEY = "sitelen-theme";
 const TEXT_STORAGE_KEY = "sitelen-text";
 const SITELEN_FONT_SIZE_DEFAULT = 40;
@@ -26,6 +30,7 @@ const SINGLE_GLYPH_WIDTH_TOLERANCE = 1.35;
 
 type CopyState = "idle" | "copied" | "downloaded" | "error";
 type Definitions = Record<string, string>;
+type SitelenFontKey = "linja-pona" | "linja-lipamanka";
 type Theme = "dark" | "light";
 type CursorWord = {
   cursor: number;
@@ -44,6 +49,50 @@ type AutocompletePosition = {
   left: number;
   top: number;
 };
+type SitelenFont = {
+  key: SitelenFontKey;
+  label: string;
+  family: string;
+  className: string;
+};
+
+const SITELEN_FONTS = [
+  {
+    key: "linja-pona",
+    label: "linja pona",
+    family: '"Linja Pona"',
+    className: "sitelen-pona--linja-pona",
+  },
+  {
+    key: "linja-lipamanka",
+    label: "linja lipamanka",
+    family: '"Linja Lipamanka"',
+    className: "sitelen-pona--linja-lipamanka",
+  },
+] as const satisfies readonly SitelenFont[];
+
+const DEFAULT_SITELEN_FONT = SITELEN_FONTS[0];
+
+function getSitelenFont(key: string | null): SitelenFont {
+  return (
+    SITELEN_FONTS.find((font) => font.key === key) ?? DEFAULT_SITELEN_FONT
+  );
+}
+
+function getDefaultText(sitelenFont: SitelenFont) {
+  return sitelenFont.key === "linja-lipamanka"
+    ? LINJA_LIPAMANKA_DEFAULT_TEXT
+    : LINJA_PONA_DEFAULT_TEXT;
+}
+
+function getCopyStateText(copyState: CopyState, sitelenFont: SitelenFont) {
+  if (copyState === "copied") {
+    return "sitelen li lon poki+tu"
+      
+  }
+
+  return "sitelen li kama";
+}
 
 function getSavedFontSize() {
   if (typeof window === "undefined") {
@@ -76,12 +125,20 @@ function getSavedTheme(): Theme {
     : "light";
 }
 
-function getSavedText() {
+function getSavedSitelenFont(): SitelenFont {
   if (typeof window === "undefined") {
-    return DEFAULT_TEXT;
+    return DEFAULT_SITELEN_FONT;
   }
 
-  return window.localStorage.getItem(TEXT_STORAGE_KEY) ?? DEFAULT_TEXT;
+  return getSitelenFont(window.localStorage.getItem(SITELEN_FONT_STORAGE_KEY));
+}
+
+function getSavedText(sitelenFont: SitelenFont) {
+  if (typeof window === "undefined") {
+    return getDefaultText(sitelenFont);
+  }
+
+  return window.localStorage.getItem(TEXT_STORAGE_KEY) ?? getDefaultText(sitelenFont);
 }
 
 function formatTokiPonaCount(value: number) {
@@ -212,9 +269,7 @@ async function filterSingleGlyphDefinitions(definitions: Definitions) {
   }
 
   if ("fonts" in document) {
-    await document.fonts.load(
-      `${SINGLE_GLYPH_FILTER_FONT_SIZE}px "Linja Pona"`,
-    );
+    await document.fonts.load(`${SINGLE_GLYPH_FILTER_FONT_SIZE}px "Linja Pona"`);
     await document.fonts.ready;
   }
 
@@ -329,8 +384,10 @@ const PNG_CAPTURE_PADDING_STYLE = {
 } satisfies CSSProperties;
 
 export default function Home() {
-  const [text, setText] = useState(DEFAULT_TEXT);
+  const [text, setText] = useState(getDefaultText(DEFAULT_SITELEN_FONT));
   const [fontSize, setFontSize] = useState(SITELEN_FONT_SIZE_DEFAULT);
+  const [sitelenFont, setSitelenFont] =
+    useState<SitelenFont>(DEFAULT_SITELEN_FONT);
   const [theme, setTheme] = useState<Theme>("light");
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [captureAnimation, setCaptureAnimation] =
@@ -349,7 +406,10 @@ export default function Home() {
 
   useEffect(() => {
     const restoreSavedSettings = window.setTimeout(() => {
-      setText(getSavedText());
+      const savedSitelenFont = getSavedSitelenFont();
+
+      setSitelenFont(savedSitelenFont);
+      setText(getSavedText(savedSitelenFont));
       setFontSize(getSavedFontSize());
       setTheme(getSavedTheme());
     }, 0);
@@ -443,6 +503,19 @@ export default function Home() {
     window.localStorage.setItem(SITELEN_FONT_SIZE_STORAGE_KEY, String(value));
   }
 
+  function updateSitelenFont(nextFont: SitelenFont) {
+    const nextDefaultText = getDefaultText(nextFont);
+
+    if (text === getDefaultText(sitelenFont)) {
+      setText(nextDefaultText);
+      window.localStorage.setItem(TEXT_STORAGE_KEY, nextDefaultText);
+    }
+
+    setSitelenFont(nextFont);
+    setCopyState("idle");
+    window.localStorage.setItem(SITELEN_FONT_STORAGE_KEY, nextFont.key);
+  }
+
   function updateText(value: string) {
     setText(value);
     setCopyState("idle");
@@ -450,7 +523,7 @@ export default function Home() {
   }
 
   function resetText() {
-    updateText(DEFAULT_TEXT);
+    updateText(getDefaultText(sitelenFont));
     setCursorWord(emptyCursorWord());
     setAutocompletePosition(null);
     setSelectedAutocompleteIndex(null);
@@ -560,7 +633,11 @@ export default function Home() {
     });
   }
 
-  async function createPngBlob(preview: HTMLDivElement, textToExport: string) {
+  async function createPngBlob(
+    preview: HTMLDivElement,
+    textToExport: string,
+    exportedFont: SitelenFont,
+  ) {
     const computed = window.getComputedStyle(preview);
     const rect = preview.getBoundingClientRect();
     const scale =
@@ -568,14 +645,18 @@ export default function Home() {
       PNG_EXPORT_SCALE_MULTIPLIER;
     const maxTextWidth = Math.max(
       1,
-      Math.ceil(rect.width - PNG_CAPTURE_PADDING_LEFT - PNG_CAPTURE_PADDING_RIGHT),
+      Math.ceil(
+        rect.width - PNG_CAPTURE_PADDING_LEFT - PNG_CAPTURE_PADDING_RIGHT,
+      ),
     );
     const renderedFontSize =
       Number.parseFloat(computed.fontSize) || SITELEN_FONT_SIZE_DEFAULT;
     const lineHeight = renderedFontSize * SITELEN_LINE_HEIGHT;
 
     if ("fonts" in document) {
-      await document.fonts.load(`${renderedFontSize * scale}px "Linja Pona"`);
+      await document.fonts.load(
+        `${renderedFontSize * scale}px ${exportedFont.family}`,
+      );
       await document.fonts.ready;
     }
 
@@ -586,7 +667,8 @@ export default function Home() {
       throw new Error("Could not create canvas context.");
     }
 
-    measureContext.font = `${renderedFontSize}px "Linja Pona", sans-serif`;
+    measureContext.font =
+      `${renderedFontSize}px ${exportedFont.family}, sans-serif`;
     const lines = wrapCanvasText(measureContext, textToExport, maxTextWidth);
     const textWidth = Math.max(
       1,
@@ -617,7 +699,7 @@ export default function Home() {
     context.fillStyle = computed.backgroundColor || "#fffdf8";
     context.fillRect(0, 0, width, height);
     context.fillStyle = computed.color || "#15130e";
-    context.font = `${renderedFontSize}px "Linja Pona", sans-serif`;
+    context.font = `${renderedFontSize}px ${exportedFont.family}, sans-serif`;
     context.textBaseline = "top";
     context.textRendering = "optimizeLegibility";
 
@@ -650,7 +732,9 @@ export default function Home() {
     try {
       setCopyState("idle");
       const captureAnimationFinished = animatePngCapture();
-      const pngBlob = Promise.resolve().then(() => createPngBlob(preview, text));
+      const pngBlob = Promise.resolve().then(() =>
+        createPngBlob(preview, text, sitelenFont),
+      );
 
       if (navigator.clipboard && "ClipboardItem" in window) {
         await navigator.clipboard.write([
@@ -767,6 +851,11 @@ export default function Home() {
         theme === "dark"
           ? "flex min-h-dvh flex-col bg-black text-white"
           : "flex min-h-dvh flex-col bg-white text-black"
+      }
+      style={
+        {
+          "--sitelen-pona-font-family": sitelenFont.family,
+        } as CSSProperties
       }
     >
       <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-5 px-5 py-6 md:px-8">
@@ -912,37 +1001,65 @@ export default function Home() {
           </label>
 
           <div className="flex flex-col gap-3">
-            <label
-              className={
-                theme === "dark"
-                  ? "flex min-h-11 flex-wrap items-center gap-3 text-sm font-medium text-[#d1d5db]"
-                  : "flex min-h-11 flex-wrap items-center gap-3 text-sm font-medium text-[#374151]"
-              }
-            >
-              <span className="sitelen-pona shrink-0 text-2xl leading-none">
-                lili anu suli
-              </span>
-              <input
+            <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
+              <label
                 className={
                   theme === "dark"
-                    ? "w-[150px] cursor-pointer accent-[#2dd4bf]"
-                    : "w-[150px] cursor-pointer accent-[#0f766e]"
+                    ? "flex min-h-11 flex-wrap items-center gap-3 text-sm font-medium text-[#d1d5db]"
+                    : "flex min-h-11 flex-wrap items-center gap-3 text-sm font-medium text-[#374151]"
                 }
-                max={SITELEN_FONT_SIZE_MAX}
-                min={SITELEN_FONT_SIZE_MIN}
-                onChange={(event) => {
-                  updateFontSize(Number(event.target.value));
-                }}
-                type="range"
-                value={fontSize}
-              />
-              <span
-                aria-label={`${fontSize}`}
-                className="sitelen-pona min-w-[8ch] shrink text-2xl leading-none"
               >
-                {formatTokiPonaCount(fontSize)}
-              </span>
-            </label>
+                <span className="sitelen-pona shrink-0 text-2xl leading-none">
+                  lili anu suli
+                </span>
+                <input
+                  className={
+                    theme === "dark"
+                      ? "w-[150px] cursor-pointer accent-[#2dd4bf]"
+                      : "w-[150px] cursor-pointer accent-[#0f766e]"
+                  }
+                  max={SITELEN_FONT_SIZE_MAX}
+                  min={SITELEN_FONT_SIZE_MIN}
+                  onChange={(event) => {
+                    updateFontSize(Number(event.target.value));
+                  }}
+                  type="range"
+                  value={fontSize}
+                />
+                <span
+                  aria-label={`${fontSize}`}
+                  className="sitelen-pona min-w-[8ch] shrink text-2xl leading-none"
+                >
+                  {formatTokiPonaCount(fontSize)}
+                </span>
+              </label>
+              <div
+                aria-label="o ante e nasin sitelen"
+                className="font-switch"
+                data-theme={theme}
+                role="group"
+              >
+                {SITELEN_FONTS.map((font) => (
+                  <button
+                    aria-label={font.label}
+                    aria-pressed={sitelenFont.key === font.key}
+                    className="font-switch__button"
+                    key={font.key}
+                    onClick={() => {
+                      updateSitelenFont(font);
+                    }}
+                    type="button"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`${font.className} font-switch__glyph`}
+                    >
+                      kijetesantakalu
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div
               ref={previewRef}
               className={
@@ -966,9 +1083,7 @@ export default function Home() {
                   }
                 >
                   <span className="sitelen-pona text-xl leading-none text-[#0f766e]">
-                    {copyState === "copied"
-                      ? "sitelen li lon poki tu"
-                      : "sitelen li kama"}
+                    {getCopyStateText(copyState, sitelenFont)}
                   </span>
                 </p>
               ) : (

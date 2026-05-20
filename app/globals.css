@@ -6,6 +6,12 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Linja Lipamanka";
+  src: url("/fonts/linjalipamanka-normal.woff") format("woff");
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -40,7 +46,8 @@ textarea {
 }
 
 .sitelen-pona {
-  font-family: "Linja Pona", var(--font-elms-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--sitelen-pona-font-family, "Linja Pona"),
+    var(--font-elms-sans), Arial, Helvetica, sans-serif;
   font-feature-settings:
     "liga" 1,
     "clig" 1,
@@ -51,6 +58,77 @@ textarea {
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
   text-transform: none;
+}
+
+.sitelen-pona--linja-pona {
+  font-family: "Linja Pona", var(--font-elms-sans), Arial, Helvetica, sans-serif;
+}
+
+.sitelen-pona--linja-lipamanka {
+  font-family: "Linja Lipamanka", var(--font-elms-sans), Arial, Helvetica,
+    sans-serif;
+}
+
+.font-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.font-switch__button {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  width: 3rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.font-switch__button:focus {
+  outline: none;
+}
+
+.font-switch__button:focus-visible {
+  border-radius: 0.375rem;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.font-switch__glyph {
+  font-size: 2rem;
+  line-height: 1;
+  filter: none;
+  text-shadow: none;
+  transition: transform 150ms ease;
+}
+
+.font-switch[data-theme="light"] {
+  --focus-ring: #0f766e;
+}
+
+.font-switch[data-theme="dark"] {
+  --focus-ring: #2dd4bf;
+}
+
+.font-switch__button:hover .font-switch__glyph,
+.font-switch__button:active .font-switch__glyph,
+.font-switch__button[aria-pressed="true"] .font-switch__glyph {
+  color: #10b981;
+  filter: none;
+  text-shadow: none;
+}
+
+.font-switch__button:active .font-switch__glyph {
+  transform: scale(0.92);
 }
 
 .theme-button {
