@@ -6,7 +6,7 @@ import type { CSSProperties, KeyboardEvent } from "react";
 const LINJA_PONA_DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [_sona_olin_nasin_jan_awen] li lon e toki+pona
 jan [_sona] li jan+lawa pi+toki+pona
 jan mute pi++ma ale li toki kepeken ona`;
-const LINJA_LIPAMANKA_DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [sonaolinnasinjanawen] li lon e toki pona
+const LINJA_LIPAMANKA_DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [sona olin nasin jan awen] li lon e toki pona
 jan [sona] li jan lawa pi toki pona
 jan mute pi maale li toki kepeken ona`;
 
@@ -30,7 +30,10 @@ const SINGLE_GLYPH_WIDTH_TOLERANCE = 1.35;
 
 type CopyState = "idle" | "copied" | "downloaded" | "error";
 type Definitions = Record<string, string>;
-type SitelenFontKey = "linja-pona" | "linja-lipamanka";
+type SitelenFontKey =
+  | "linja-pona"
+  | "linja-lipamanka"
+  | "sitelen-seli-kiwen";
 type Theme = "dark" | "light";
 type CursorWord = {
   cursor: number;
@@ -69,6 +72,12 @@ const SITELEN_FONTS = [
     family: '"Linja Lipamanka"',
     className: "sitelen-pona--linja-lipamanka",
   },
+  {
+    key: "sitelen-seli-kiwen",
+    label: "sitelen seli kiwen",
+    family: '"Sitelen Seli Kiwen Mono Asuki"',
+    className: "sitelen-pona--sitelen-seli-kiwen",
+  },
 ] as const satisfies readonly SitelenFont[];
 
 const DEFAULT_SITELEN_FONT = SITELEN_FONTS[0];
@@ -80,15 +89,18 @@ function getSitelenFont(key: string | null): SitelenFont {
 }
 
 function getDefaultText(sitelenFont: SitelenFont) {
-  return sitelenFont.key === "linja-lipamanka"
-    ? LINJA_LIPAMANKA_DEFAULT_TEXT
-    : LINJA_PONA_DEFAULT_TEXT;
+  if (sitelenFont.key === "linja-pona") {
+    return LINJA_PONA_DEFAULT_TEXT;
+  }
+
+  return LINJA_LIPAMANKA_DEFAULT_TEXT;
 }
 
 function getCopyStateText(copyState: CopyState, sitelenFont: SitelenFont) {
   if (copyState === "copied") {
-    return "sitelen li lon poki+tu"
-      
+    return sitelenFont.key === "linja-pona"
+      ? "sitelen li lon poki+tu"
+      : "sitelen li lon poki tu";
   }
 
   return "sitelen li kama";

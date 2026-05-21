@@ -12,6 +12,12 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Sitelen Seli Kiwen Mono Asuki";
+  src: url("/fonts/sitelenselikiwenmonoasuki.woff2") format("woff2");
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -67,6 +73,11 @@ textarea {
 .sitelen-pona--linja-lipamanka {
   font-family: "Linja Lipamanka", var(--font-elms-sans), Arial, Helvetica,
     sans-serif;
+}
+
+.sitelen-pona--sitelen-seli-kiwen {
+  font-family: "Sitelen Seli Kiwen Mono Asuki", var(--font-elms-sans), Arial,
+    Helvetica, sans-serif;
 }
 
 .font-switch {
