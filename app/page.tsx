@@ -9,6 +9,9 @@ jan mute pi++ma ale li toki kepeken ona`;
 const LINJA_LIPAMANKA_DEFAULT_TEXT = `tenpo+sike mute ale mute wan la jan [sona olin nasin jan awen] li lon e toki pona
 jan [sona] li jan lawa pi toki pona
 jan mute pi maale li toki kepeken ona`;
+const SITELEN_SELI_KIWEN_DEFAULT_TEXT = `tenpo2 sike mute2 ale mute2 wan la jan2 [sona olin2 nasin jan3 awen] li lon e toki+pona
+jan [sona] li jan+lawa pi toki+pona
+jan mute pi ma+ale li toki kepeken ona2`;
 
 const SITELEN_FONT_SIZE_STORAGE_KEY = "sitelen-font-size";
 const SITELEN_FONT_STORAGE_KEY = "sitelen-font";
@@ -91,6 +94,10 @@ function getSitelenFont(key: string | null): SitelenFont {
 function getDefaultText(sitelenFont: SitelenFont) {
   if (sitelenFont.key === "linja-pona") {
     return LINJA_PONA_DEFAULT_TEXT;
+  }
+
+  if (sitelenFont.key === "sitelen-seli-kiwen") {
+    return SITELEN_SELI_KIWEN_DEFAULT_TEXT;
   }
 
   return LINJA_LIPAMANKA_DEFAULT_TEXT;
